@@ -1,0 +1,116 @@
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#090611">
+<title>لمّة | Lamma</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#090611;color:white;font-family:Arial,sans-serif;text-align:center}
+header{padding:30px 15px}
+.logo{font-size:42px;font-weight:bold;color:#bd75ff;text-shadow:0 0 18px #922cff}
+.sub{color:#b9a9c9}
+main{padding:15px;max-width:500px;margin:auto}
+h2{margin-top:25px}
+button{width:100%;padding:17px;margin:9px 0;border:1px solid #a34bff;border-radius:15px;background:#190d29;color:white;font-size:18px;font-weight:bold}
+.primary{background:linear-gradient(100deg,#7925d9,#bd55ff);border:0;box-shadow:0 0 20px #7024ad}
+.card{background:#151020;border:1px solid #39204e;border-radius:18px;padding:18px;margin:14px 0}
+#question{font-size:20px;line-height:1.7}
+.answer{background:#211331}
+footer{color:#8e7c9e;padding:30px}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">💜 لمّة</div>
+<div class="sub">اللعبة أحلى مع اللمة</div>
+</header>
+<main>
+<h2>أهلاً وسهلاً فيك!</h2>
+<p class="sub">اختار لعبتك وخلينا نبدأ التحدي</p>
+<button class="primary" onclick="startQuiz('ثقافة عامة')">🎯 ثقافة عامة</button>
+<button onclick="startQuiz('كرة القدم')">⚽ كرة القدم</button>
+<div class="card">
+<h3 id="category">جاهز للتحدي؟</h3>
+<p id="question">اختار فئة الأسئلة لنبدأ اللعب 💜</p>
+<div id="answers"></div>
+<p id="result"></p>
+<button onclick="nextQuestion()">السؤال التالي ←</button>
+</div>
+<div class="card">
+<h3>🏆 لمّة تجمعنا</h3>
+<p>تحدّى نفسك وأصدقائك!</p>
+</div>
+</main>
+<footer>© Lamma 2026</footer>
+<script>
+let questions=[];
+let current=0;
+let score=0;
+let selected=[];
+function startQuiz(category){
+questions=[];
+current=0;
+score=0;
+document.getElementById('category').textContent=category;
+document.getElementById('question').textContent='قاعدين نحضّر الأسئلة...';
+document.getElementById('result').textContent='';
+document.getElementById('answers').innerHTML='';
+loadQuestions(category);
+}
+async function loadQuestions(category){
+try{
+const response=await fetch('SUPABASE_URL/rest/v1/questions?quiz=eq.'+encodeURIComponent(category)+'&select=prompt,option_a,option_b,option_c,option_d,correct_index');
+if(!response.ok)throw new Error();
+questions=await response.json();
+if(!questions.length){
+document.getElementById('question').textContent='ما لقينا أسئلة بهالفئة حالياً.';
+return;
+}
+showQuestion();
+}catch(e){
+document.getElementById('question').textContent='لسه بدنا نربط قاعدة البيانات حتى تظهر الأسئلة 💜';
+}
+}
+function showQuestion(){
+if(current>=questions.length){
+document.getElementById('question').textContent='خلص التحدي! نتيجتك: '+score+' من '+questions.length;
+document.getElementById('answers').innerHTML='';
+return;
+}
+let q=questions[current];
+document.getElementById('question').textContent=q.prompt;
+document.getElementById('result').textContent='';
+let options=[q.option_a,q.option_b,q.option_c,q.option_d];
+document.getElementById('answers').innerHTML='';
+options.forEach((option,i)=>{
+let b=document.createElement('button');
+b.className='answer';
+b.textContent=option;
+b.onclick=()=>{
+if(selected.includes(current))return;
+selected.push(current);
+if(i===q.correct_index){
+score++;
+document.getElementById('result').textContent='إجابة صحيحة! 👏';
+}else{
+document.getElementById('result').textContent='للأسف، إجابة خاطئة 💜';
+}
+};
+document.getElementById('answers').appendChild(b);
+});
+}
+function nextQuestion(){
+if(!questions.length)return;
+if(!selected.includes(current)){
+document.getElementById('result').textContent='اختار إجابة أولاً!';
+return;
+}
+current++;
+showQuestion();
+}
+</script>
+</body>
+</html>
